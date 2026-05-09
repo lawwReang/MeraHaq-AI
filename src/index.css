@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --shadow-soft: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+}
+
+@layer base {
+  :root {
+    --bg: #000000;
+    --card: #080808;
+    --border: rgba(255, 255, 255, 0.05);
+    --text-main: #FFFFFF;
+    --text-muted: #888888;
+  }
+
+  :root.light {
+    --bg: #FDFBFF;
+    --card: #FFFFFF;
+    --border: rgba(0, 0, 0, 0.03);
+    --text-main: #2D2D2D;
+    --text-muted: #737373;
+  }
+
+  body {
+    @apply bg-bg text-text-main font-sans min-h-[100dvh] transition-colors duration-300 w-full;
+  }
+  #root {
+    @apply h-full;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-[rgba(26,26,26,0.6)] backdrop-blur-xl border border-white/10;
+  }
+  
+  .scheme-card {
+    @apply bg-card border border-[#262626] transition-all duration-300;
+  }
+  
+  .scheme-card:hover {
+    @apply border-blue-500 shadow-2xl shadow-blue-500/10;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
+  
+  :is(.dark .custom-scrollbar)::-webkit-scrollbar-thumb {
+    background: #262626;
+  }
+  :is(.dark .custom-scrollbar)::-webkit-scrollbar-thumb:hover {
+    background: #404040;
+  }
+
+  .mask-linear {
+    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10px, black calc(100% - 10px), transparent);
+  }
+
+  .mobile-touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+}

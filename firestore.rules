@@ -1,0 +1,101 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitive Definitions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Phase 4: Validation Blueprints
+    function isValidUser(data) {
+      return data.keys().hasAll(['displayName', 'age', 'location', 'createdAt', 'updatedAt']) &&
+             data.keys().size() >= 5 && data.keys().size() <= 10 &&
+             data.displayName is string && data.displayName.size() <= 200 &&
+             data.age is number && data.age >= 0 && data.age <= 120 &&
+             data.location is string && data.location.size() <= 200 &&
+             (!('gender' in data) || (data.gender is string && data.gender.size() <= 100)) &&
+             (!('incomeBracket' in data) || (data.incomeBracket is string && data.incomeBracket.size() <= 200)) &&
+             (!('occupation' in data) || (data.occupation is string && data.occupation.size() <= 200)) &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
+    function isValidSavedScheme(data) {
+      return data.keys().hasAll(['userId', 'id', 'name', 'matchScore', 'benefit', 'createdAt']) &&
+             data.keys().size() >= 6 && data.keys().size() <= 12 &&
+             data.userId == request.auth.uid &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 200 &&
+             data.matchScore is string && data.matchScore.size() <= 50 &&
+             data.benefit is string && data.benefit.size() <= 5000 &&
+             (data.get('description', null) == null || (data.description is string && data.description.size() <= 2000)) &&
+             (data.get('eligibility', null) == null || (data.eligibility is string && data.eligibility.size() <= 2000)) &&
+             (data.get('category', null) == null || (data.category is string && data.category.size() <= 200)) &&
+             (data.get('tags', null) == null || data.tags is list) &&
+             (data.get('steps', null) == null || data.steps is list) &&
+             data.createdAt is timestamp;
+    }
+
+    // Rules for Users
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isVerified() && 
+                      isValidUser(incoming()) && 
+                      incoming().createdAt == request.time &&
+                      incoming().updatedAt == request.time;
+      
+      allow update: if isOwner(userId) && 
+                      isValidUser(incoming()) &&
+                      incoming().createdAt == existing().createdAt &&
+                      incoming().updatedAt == request.time &&
+                      (
+                        // Allow updating profile fields
+                        incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'age', 'gender', 'location', 'incomeBracket', 'occupation', 'createdAt', 'updatedAt'])
+                      );
+    }
+
+    // Rules for Saved Schemes
+    match /users/{userId}/saved_schemes/{schemeId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isVerified() && 
+                      isValidId(schemeId) &&
+                      incoming().id == schemeId &&
+                      isValidSavedScheme(incoming()) &&
+                      incoming().createdAt == request.time;
+
+      allow update: if isOwner(userId) && isVerified() &&
+                      isValidSavedScheme(incoming()) &&
+                      incoming().id == existing().id &&
+                      incoming().userId == existing().userId &&
+                      incoming().createdAt == existing().createdAt;
+      
+      allow delete: if isOwner(userId) && isVerified();
+    }
+  }
+}

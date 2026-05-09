@@ -1,0 +1,49 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Information about the user for scheme matching and preferences.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string", "description": "Full name of the user" },
+        "age": { "type": "number", "description": "Age of the user" },
+        "gender": { "type": "string", "description": "Gender of the user (optional)" },
+        "location": { "type": "string", "description": "State or city of the user" },
+        "incomeBracket": { "type": "string", "description": "Monthly or annual income bracket (optional)" },
+        "occupation": { "type": "string", "description": "Occupation of the user (optional)" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["displayName", "age", "location", "createdAt", "updatedAt"]
+    },
+    "SavedScheme": {
+      "title": "Saved Scheme",
+      "description": "A scheme that the user has saved for later viewing.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID of the scheme" },
+        "userId": { "type": "string", "description": "UID of the user who saved it" },
+        "name": { "type": "string", "description": "Name of the scheme" },
+        "description": { "type": "string" },
+        "eligibility": { "type": "string" },
+        "benefit": { "type": "string" },
+        "matchScore": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "steps": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "id", "name", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles stored by UID."
+    },
+    "/users/{userId}/saved_schemes/{schemeId}": {
+      "schema": "SavedScheme",
+      "description": "Schemes saved by an individual user."
+    }
+  }
+}
